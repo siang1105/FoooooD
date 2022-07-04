@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Bootstrap demo</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    </head>
+
+    <style>
+        .food{
+            font-family: Times;
+        }
+        .icon{
+            font-size: 20px;
+        }
+        .box{
+            width: 800px;
+        }
+        .menu{
+            --bs-btn-color:#4d4b4b;
+            --bs-btn-bg: null;
+            --bs-btn-border-color: null;
+            --bs-btn-hover-color: #8e8b8b;
+            --bs-btn-hover-bg: null;
+            --bs-btn-active-bg: null;
+            --bs-btn-active-color: #636363;
+        }
+        .save{
+            --bs-btn-bg:rgba(0, 0, 0, 0.53);
+            --bs-btn-border-color:#545252;
+            --bs-btn-hover-bg: #3d3d3e;
+        }
+        .close{
+            --bs-btn-bg:#b0abab;
+            --bs-btn-border-color: #959798;
+        }
+        #map {
+        height: 700px;
+        width: 650px;
+       }
+    </style>
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const id = urlParams.get('id');
+        console.log(id)
+        async function getdata(){
+            const url = 'http://3.115.203.170/api/v01/detail?id=' + id
+            const response = await fetch(url)
+            const data = await response.json()
+            const userURL = 'http://3.115.203.170/api/v01/username?id=' + data.post[0].userId
+            const responseUser = await fetch(userURL)
+            const dataUser = await responseUser.json()
+            document.getElementById("photo").innerHTML = '<img src= "../images/' + data.post[0].photo + '" class="img-fluid rounded-start w-100">'
+            document.getElementById("user").innerHTML = '  ' + dataUser.name[0].username
+            document.getElementById("restaurant").innerHTML = data.post[0].restaurant
+            document.getElementById("city").innerHTML = '-  ' + data.post[0].city
+            document.getElementById("description").innerHTML = data.post[0].description
+            document.getElementById("place").innerHTML = data.post[0].place 
+            document.getElementById("heartNum").innerHTML = data.post[0].heart
+
+            const commentUrl = 'http://3.115.203.170/api/v01/comment?id=' + id
+            const commentResult = await fetch(commentUrl)
+            const commentJson = await commentResult.json()
+            var comm = ''
+            commentJson.comment.forEach(myfunc)
+            document.getElementById("getCom").innerHTML = comm
+            function myfunc(value){
+                comm += ' <li class="list-group-item "> '
+                comm += ' <span class="bi bi-person-circle">  ' + value.username + ' : ' + value.text + '</span>'
+                comm += ' </li> '
+                console.log(value)
+            }
+            const requestData = { pid: id }
+            fetch('http://localhost:3000/checklike.html', {
+              body: JSON.stringify(requestData),
+              headers: new Headers({
+                'Content-Type': 'application/json',
+              }),
+              method: 'POST',
+            }).then((response) => {
+                return response.json()
+            }).then((data) => {
+                if(data.isLiked > 0){
+                    const modal = document.getElementById('dwLike');
+                    modal.classList.remove('bi-heart');
+                    modal.classList.add('bi-heart-fill');
+                }
+            })
+            
+        }
+        getdata()
+
+        function register(){
+            const modal = document.getElementById('register');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+
+            const modalbg = document.getElementsByClassName('modal-backdrop fade show');
+            modalbg[0].remove();
+
+            const toastLiveExample = document.getElementById('liveToast')
+            const toast = new bootstrap.Toast(toastLiveExample)
+
+            toast.show()
+
+            const requestData = {
+              username: document.getElementById('username').value,
+              email: document.getElementById('email').value + '@gmail.com',
+              password: document.getElementById('password').value
+            }
+            fetch('http://3.115.203.170/signup.html', {
+              body: JSON.stringify(requestData),
+              headers: new Headers({
+                'Content-Type': 'application/json',
+              }),
+              method: 'POST',
+            }).then((response) => {
+              response.json()
+              if(response.status == 200){
+                text = 'Hello, registration success !'
+              }
+              else{
+                text = 'Hello, you are already a member !'
+              }
+              document.getElementById("regCheck").innerHTML = text
+            })
+        }       
+
+        async function logIn(){
+            const modal = document.getElementById('logIn');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            
+            const modalbg = document.getElementsByClassName('modal-backdrop fade show');
+            modalbg[0].remove();
+            
+            const MtoastLiveExample = document.getElementById('MliveToast')
+            const Mtoast = new bootstrap.Toast(MtoastLiveExample)
+            
+            Mtoast.show()
+            
+            const requestData = {
+              username: document.getElementById('Musername').value,
+              email: document.getElementById('Memail').value + '@gmail.com',
+              password: document.getElementById('Mpassword').value
+            }
+            fetch('http://localhost:3000/signin.html', {
+              body: JSON.stringify(requestData),
+              headers: new Headers({
+                'Content-Type': 'application/json',
+              }),
+              method: 'POST'
+            }).then((response) => {
+              if(response.status == 200){
+                text = 'Hello, logged in successfully !'
+                document.getElementById("logCheck").innerHTML = text
+                return response.json()
+              }
+              else if(response.status == 400){
+                text = 'Sorry, wrong password !'
+                document.getElementById("logCheck").innerHTML = text
+              }
+              else if(response.status == 500){
+                text = 'Sorry,You have not registered as a member or your username is wrong! '
+                document.getElementById("logCheck").innerHTML = text
+              }
+            })
+        }
+
+        async function logout(){
+            const MLOtoastLiveExample = document.getElementById('logout')
+            const MLOtoast = new bootstrap.Toast(MLOtoastLiveExample)
+            
+            MLOtoast.show()
+            
+            const response = await fetch("http://localhost:3000/logout")
+            if(response.status == 200) text = 'Hello, logged out successfully !'
+            else text = 'Sorry, Logout failed !'
+            document.getElementById("logoutCheck").innerHTML = text
+        }
+        
+        function like(){
+            const Data = { pid: id }
+            fetch('http://localhost:3000/checklike.html', {
+              body: JSON.stringify(Data),
+              headers: new Headers({
+                'Content-Type': 'application/json',
+              }),
+              method: 'POST',
+            }).then((response) => { 
+                if(response.status == 403){
+                    text = 'Sorry, If you want to like a post, you must be logged in !'
+                    document.getElementById("likeCheck").innerHTML = text
+                    const liketoast = document.getElementById('needMember')
+                    const Mliketoast = new bootstrap.Toast(liketoast)
+                    Mliketoast.show()
+                }
+                return response.json()
+            }).then((data) => {
+                if(data.isLiked > 0){
+                    const modal = document.getElementById('dwLike');
+                    modal.classList.remove('bi-heart-fill');
+                    modal.classList.add('bi-heart');
+                    const requestData = { pid: id }
+                    fetch('http://localhost:3000/notlike.html', {
+                      body: JSON.stringify(requestData),
+                      headers: new Headers({
+                        'Content-Type': 'application/json',
+                      }),
+                      method: 'POST',
+                    }).then((response) => {
+                        return response.json()
+                    }).then((data) => {
+                        document.getElementById("heartNum").innerHTML = data.nowheart
+                    })
+                }
+                else{
+                    const modal = document.getElementById('dwLike');
+                    modal.classList.remove('bi-heart');
+                    modal.classList.add('bi-heart-fill');
+                    const requestData = { pid: id }
+                    fetch('http://localhost:3000/like.html', {
+                      body: JSON.stringify(requestData),
+                      headers: new Headers({
+                        'Content-Type': 'application/json',
+                      }),
+                      method: 'POST',
+                    }).then((response) => { return response.json()
+                    }).then((data) => {
+                        document.getElementById("heartNum").innerHTML = data.nowheart
+                    })
+                }
+            }) 
+        }
+
+        function create(){
+            const modal = document.getElementById('commentModal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            const modalbg = document.getElementsByClassName('modal-backdrop fade show');
+            modalbg[0].remove();
+            const userComment = document.getElementById('userComment').value
+            const requestData = {
+                pid: id,
+                text: userComment
+            }
+            fetch('http://localhost:3000/comment.html', {
+                body: JSON.stringify(requestData),
+                headers: new Headers({
+                    'Content-Type': 'application/json',
+                }),
+                method: 'POST'
+            }).then((response) =>{
+
+                if(response.status == 403){
+                    text = 'Sorry, If you want to give a comment, you must be logged in !'
+                    document.getElementById("commentCheck").innerHTML = text
+                    const commenttoast = document.getElementById('needMemberComment')
+                    const Mcommenttoast = new bootstrap.Toast(commenttoast)
+                    Mcommenttoast.show()
+                }
+                return response.json()
+            }).then((data) => {
+                var comm = ''
+                comm += ' <li class="list-group-item "> '
+                comm += ' <span class="bi bi-person-circle">  ' + data.username + ' : ' + data.comment + '</span>'
+                comm += ' </li> '
+                document.getElementById("getNewCom").innerHTML = comm
+            })
+        }
+
+        async function searchFunc(){
+            var T = ''
+            for(let i = 0; i < 7; i++){
+              T += '<div class="spinner-grow " role="status" style="color: #455981;">' + '<span class="visually-hidden">Loading...</span>' + '</div>'
+            }
+            document.getElementById("load").innerHTML = T
+            setTimeout(function(){
+              T = ''
+              document.getElementById("load").innerHTML = T
+              document.getElementById("searchResult").innerHTML = text
+            },2000);
+            const keyword = document.getElementById('sss').value
+            const url = 'http://3.115.203.170/api/v01/search?keyword=' + keyword
+            const result = await fetch(url)
+            const data = await result.json()
+            if(data.post.length == 0 || !keyword ){
+                var text = 'Sorry, we found no related posts'
+            }
+            else{
+                var text = ' '
+                data.post.forEach(myfunc)
+            }
+            function myfunc(value){
+                text += '<a href = "/admin/post.html?id=' + value.postId + '"><img src="../images/' + value.photo +' " class="w-100 img-fluid mb-4 images" ></a>'
+            }
+            // document.getElementById("searchResult").innerHTML = text
+        }
+
+        async function getAdd(){
+            const url = 'http://3.115.203.170/api/v01/detail?id=' + id
+            const response = await fetch(url)
+            const data = await response.json()
+            return data.post[0].place
+        }
+        
+        async function initMap() {
+            const add = getAdd()
+            add.then((data) => {
+                var address = data
+                var geocoder = new google.maps.Geocoder();
+                var map = new google.maps.Map(document.getElementById('map'), {
+                  zoom: 17
+                });
+            
+                geocoder.geocode( { 'address': address}, function(results, status) {
+                  if (status == 'OK') {
+                    map.setCenter(results[0].geometry.location);
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location
+                    });
+                  } else {
+                    console.log(status);
+                  }
+                });
+            })
+        }
+
+        
+        
+    </script>
+    
+    <body>
+        <div class="modal fade" id="register" tabindex="-1" aria-labelledby="registerLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg ">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="registerLabel">Register</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Username" id = "username" aria-label="Username" aria-describedby="basic-addon1">
+                        </div>
+                      
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Email" id = "email" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <span class="input-group-text" id="basic-addon2">@gmail.com</span>
+                        </div>
+                      
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Password" id = "password" aria-label="Password" aria-describedby="basic-addon3">
+                        </div>
+                    </div>
+                    <div class="modal-footer modal-footer-bg-null">
+                        <button type="button" class="btn btn-secondary close" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary save" onclick={register()}>Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="logIn" tabindex="-1" aria-labelledby="logInLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="logInLabel">Log In</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Username" id = "Musername" aria-label="Username" aria-describedby="basic-addon1">
+                        </div>
+                      
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Email" id = "Memail" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <span class="input-group-text" id="basic-addon2">@gmail.com</span>
+                        </div>
+                      
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Password" id = "Mpassword" aria-label="Password" aria-describedby="basic-addon3">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary save" onclick={logIn()}>Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="navbar navbar-expand-lg bg-light mb-4">
+            <div class="container-fluid">
+                <a href = "/admin/index.html" class="navbar-brand mx-3 food fs-3">FoooooD</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <form class="d-flex mx-auto" >
+                        <input class="form-control bg-secondary " style="--bs-bg-opacity: .1;" placeholder="Search"  id = "sss">
+                        <a class="btn bi bi-search fs-5" style="--bs-btn-border-width: 0px" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSearch" aria-controls="offcanvasSearch" onclick={searchFunc()}></a>
+                    </form>
+                    <ul class="navbar-nav mx-3 mb-2 mb-lg-0">
+                        <li class="nav-item mx-2 fs-5 ">
+                            <div class="bi bi-book nav-link" data-bs-toggle="modal" data-bs-target="#exampleModal"></div>
+                        </li>
+                        <li class="nav-item mx-2 fs-5 ">
+                            <a href = "/admin/index.html" class="nav-link active bi bi-house-door  " aria-current="page" href="#"></a>
+                        </li>
+                        <li class="nav-item mx-2 fs-5 ">
+                            <a href="/admin/share.html" class="nav-link bi bi-plus-square" href="#"></a>
+                        </li>
+                        <li class="nav-item dropdown mx-2 fs-5">
+                            <a class="nav-link dropdown-toggle bi bi-clipboard2-plus-fill" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              Add us
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><button type="button" class="btn btn-primary menu" data-bs-toggle="modal" data-bs-target="#register">
+                                  Resgister
+                                </button></li>
+                                <li><button type="button" class="btn btn-primary menu" data-bs-toggle="modal" data-bs-target="#logIn">
+                                  Log in
+                                </button></li>
+                                <li><button type="button" class="btn btn-primary menu" data-bs-toggle="modal" data-bs-target="#logOut" onclick={logout()}>
+                                    Log out
+                                </button></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item fs-5 ">
+                            <a href="/admin/profile.html"class="nav-link bi bi-person-circle"></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="container-fluid " style="margin-left: 0;">
+            <div class="row">
+                <div class="col-2">
+                    <div class="list-group" style="--bs-list-group-border-color:rgba(0, 0, 0, 0) ; --bs-list-group-item-padding-y:0.2rem">
+                        <a href="/admin/city.html?city=台北" class="list-group-item list-group-item-action link-secondary" aria-current="true" style="padding-left: 50px;">Taipei</a>
+                        <a href="/admin/city.html?city=新北" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">New Taipei</a>
+                        <a href="/admin/city.html?city=桃園" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Taoyuan</a>
+                        <a href="/admin/city.html?city=台中" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Taichung</a>
+                        <a href="/admin/city.html?city=台南" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Tainan</a>
+                        <a href="/admin/city.html?city=高雄" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Kaohsiung</a>
+                        <a href="/admin/city.html?city=新竹" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Hsinchu</a>
+                        <a href="/admin/city.html?city=苗栗" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Miaoli</a>
+                        <a href="/admin/city.html?city=彰化" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Changhua</a>
+                        <a href="/admin/city.html?city=南投" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Nantou</a>
+                        <a href="/admin/city.html?city=雲林" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Yunlin</a>
+                        <a href="/admin/city.html?city=嘉義" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Chiayi</a>
+                        <a href="/admin/city.html?city=屏東" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Pingtung</a>
+                        <a href="/admin/city.html?city=宜蘭" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Yilan</a>
+                        <a href="/admin/city.html?city=花蓮" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Hualien</a>
+                        <a href="/admin/city.html?city=台東" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Taitung</a>
+                        <a href="/admin/city.html?city=基隆" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Keelung</a>
+                        <a href="/admin/city.html?city=澎湖" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Penghu</a>
+                        <a href="/admin/city.html?city=金門" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Kinmen</a>
+                        <a href="/admin/city.html?city=連江" class="list-group-item list-group-item-action link-secondary" style="padding-left: 50px;">Lianjiang</a>
+                    </div>
+                </div>
+                <div class="col-10" >
+                    <div class="card text-bg-light mb-3 mt-4 ml-0" style="max-width: 1100px;">
+                        <div class="row g-0" style="--bs-gutter-x:0rem;">
+                            <div class="col-md-6" id = "photo"></div>
+                            <div class="col-md-6" >
+                                <div class="card-header bi bi-person-fill" id = "user"></div>
+                                <div class="card-body overflow-scroll">
+                                    <h3 class="card-title d-inline" id = "restaurant" ></h3>
+                                    <p class="card-text text-black-50 text-primary text-opacity-50 d-inline translate-middle-x position-absolute end-0" id = "city"></p>
+                                    <p class="card-text lh-lg mt-4" id = "description"></p>
+                                    <span><button class="card-text d-inline bi bi-heart position-absolute bottom-10 start-60" id = "dwLike" style="border-style: none; border-color: transparent; background-color:transparent;" onclick={like()}></button></span>
+                                    <span class="card-text d-inline text-secondary bottom-10 start-60 mx-4" id = "heartNum"></span>
+                                    <span style="border-style: none; border-color: transparent; background-color:transparent;" data-bs-toggle="modal" data-bs-target="#commentModal"><span class="bi bi-chat ml-5" style="font-size: 18px; cursor: pointer;"></span></span>
+                                    
+                                    <span  class = " text-secondary  mx-5" style="border-style: none; border-color: transparent; background-color:transparent; margin-left: 20px; cursor: pointer;" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions" data-bs-toggle="tooltip" data-bs-placement="top" title="在Google地圖上顯示" tooltip-font-size="30px"><p class="card-text bi bi-geo-alt-fill text-end text-secondary  mx-0" id = "place" style="margin-left: 50px;"></p></span>
+                                    <div class="border border-dark" style="--bs-border-opacity: .2;"></div>
+                                </div>
+                                <ul class="list-group list-group-flush " style="--bs-list-group-bg:null; --bs-list-group-color: #5c7691" id = "getCom" ></ul>
+                                <ul class="list-group list-group-flush " style="--bs-list-group-bg:null; --bs-list-group-color: #5c7691" id = "getNewCom" ></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div id="map" class="mb-3"></div> -->
+                </div>
+            </div>
+        </div>
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div class="rounded me-2 bi bi-bell-fill"></div>
+                    <strong class="me-auto">Register</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id = "regCheck"></div>
+            </div>
+        </div>
+    
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="MliveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div class="rounded me-2 bi bi-bell-fill"></div>
+                    <strong class="me-auto">Log In</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id = "logCheck"></div>
+            </div>
+        </div>
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="logout" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div class="rounded me-2 bi bi-bell-fill"></div>
+                    <strong class="me-auto">Log Out</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id = "logoutCheck"></div>
+            </div>
+        </div>
+
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="needMember" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div class="rounded me-2 bi bi-bell-fill"></div>
+                    <strong class="me-auto">you must be a member</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id = "likeCheck"></div>
+            </div>
+        </div>
+
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="needMemberComment" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <div class="rounded me-2 bi bi-bell-fill"></div>
+                    <strong class="me-auto">you must be a member</strong>
+                    <small>now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id = "commentCheck"></div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="commentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="staticBackdropLabel">Give some message......</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-floating">
+                        <textarea class="form-control" placeholder="Leave a comment here" id="userComment" style="height: 100px"></textarea>
+                        <label for="floatingTextarea2">Comments</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary close" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary save" onclick={create()}>Save</button>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel" style="width:700px; background-color: transparent; border: 0px;">
+          <div class="offcanvas-header">
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <div id="map" ></div>
+          </div>
+        </div>
+
+        <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasSearch" aria-labelledby="offcanvasSearchLabel" style="width:350px;">
+            <div class="offcanvas-header" id="load">
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div id="searchResult"></div>
+            </div>
+        </div>
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">How to use FoooooD ? </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>1. Register your account 💻🙋🏻‍♀️</div><br>
+                        <div>2. Start sharing your favorite restaurants 🍔🥂🍰🥘</div><br>
+                        <div>3. You can like and comment on other people's posts 👍🏻💡</div><br>
+                        <div>4. Collect your own food map 🌍📷</div><br>
+                        <div>5. You can check the restaurant location in the post📍🚗</div><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtNOKBRlOc9LvUbthxkvuBfLPKFLtkIQI&callback=initMap">
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    </body>
+</html>
