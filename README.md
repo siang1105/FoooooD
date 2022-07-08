@@ -37,7 +37,7 @@ Main featurs to expect from FoooooD:
 
 ---
 ## Technologies
-* Back-End: Node.js, Express, NGINX, RESTful API
+* Back-End: Node.js, Express, NGINX, RESTful API, jwt token, cookie
 * Front-End: HTML, CSS, JavaScript, Bootstrap
 * Database: MySQL
 * Cloud Service (AWS): Elastic Compute Cloud (EC2)
