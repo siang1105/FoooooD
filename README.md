@@ -47,3 +47,5 @@ Main featurs to expect from FoooooD:
 
 ---
 ## Database Schema
+<img width="740" alt="截圖 2022-08-13 下午4 55 59" src="https://user-images.githubusercontent.com/72157866/184476774-e871f5bc-3740-4604-902f-ac11d0f98c30.png">
+
